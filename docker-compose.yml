@@ -7,13 +7,13 @@ services:
       - "6379:6379"
 
   api:
-    build: ./api
+    build: ./api-gateway
     ports:
       - "3000:3000"
     depends_on:
       - redis
 
   worker:
-    build: ./worker
+    build: ./worker1
     depends_on:
       - redis
