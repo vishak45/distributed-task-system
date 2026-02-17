@@ -17,3 +17,5 @@ services:
     build: ./worker1
     depends_on:
       - redis
+
+    
