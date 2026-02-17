@@ -11,6 +11,7 @@ router.post("/task", async (req, res) => {
     id: taskId,
     type: req.body.type || "TEST",
     payload: req.body.payload || {},
+    name: req.body.name || "Anonymous",
   };
 
   await queue.add("new-task", task);
