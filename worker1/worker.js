@@ -2,7 +2,7 @@ const { Worker } = require("bullmq");
 const processor = require("./processor");
 
 const worker = new Worker(
-  "task-queue",
+  "nodeJs",
   processor,
   {
     connection: {
