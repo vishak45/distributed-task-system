@@ -1,27 +1,42 @@
 const express = require("express");
-const { v4: uuidv4 } = require("uuid");
+
 const queue = require("../queue/queue");
 
 const router = express.Router();
 
-router.post("/task", async (req, res) => {
-  const taskId = uuidv4();
+router.post("/addTasks", async(req,res) =>{
+  try{
+    const { taskId,taskName,
+    description,
+    taskType,
+    priority,
+    timeout,
+    retryCount} = req.body;
 
-  const task = {
-    id: taskId,
-    type: req.body.type || "TEST",
-    payload: req.body.payload || {},
-    name: req.body.name || "Anonymous",
-  };
+   const task = {
+     id: taskId,
+     type: taskType,
+     payload: {
+       taskName,
+       description,
+       priority,
+       timeout,
+       retryCount
+     }
 
-  await queue.add("new-task", task);
+   } 
 
-  console.log("Task queued:", task);
-
-  res.json({
-    message: "Task submitted",
-    taskId,
-  });
+    await queue.add(`${taskType}`, task);
+    console.log("Task queued:", task);
+    res.status(200).json({
+      message: "Task submitted",
+      taskId,
+    });
+  }
+  catch(err)
+  {
+    res.status(500).json({error: err.message});
+  }
 });
 
 module.exports = router;
