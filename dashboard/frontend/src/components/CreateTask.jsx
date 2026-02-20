@@ -86,10 +86,10 @@ export default function CreateTask() {
                   <option value="ml-training">🤖 ML Training</option>
                 </optgroup>
                 <optgroup label="🟩 Node.js Workers">
-                  <option value="report-generation">📄 Report Generation</option>
+                 
                   <option value="api-integration">🔌 API Integration</option>
                   <option value="data-transformation">🔄 Data Transformation</option>
-                  <option value="email-sending">📧 Email Sending</option>
+               
                 </optgroup>
               </select>
             </div>
@@ -180,10 +180,9 @@ export default function CreateTask() {
                 <div>
                   <strong style={{ color: '#48bb78' }}>🟩 Node.js Workers:</strong>
                   <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
-                    <li>📄 Report Generation - Generate PDF/Excel reports</li>
+                  
                     <li>🔌 API Integration - Fetch and process external API data</li>
                     <li>🔄 Data Transformation - Convert between formats (CSV/JSON/XML)</li>
-                    <li>📧 Email Sending - Bulk email delivery and templating</li>
                   </ul>
                 </div>
               </div>
