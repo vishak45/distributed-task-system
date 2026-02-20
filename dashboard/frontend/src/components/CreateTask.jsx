@@ -80,11 +80,17 @@ export default function CreateTask() {
                 value={formData.taskType}
                 onChange={handleChange}
               >
-                <option value="email-spam">Email Spam Detection</option>
-                <option value="data-processing">Data Processing</option>
-                <option value="image-analysis">Image Analysis</option>
-                <option value="text-analysis">Text Analysis</option>
-                <option value="ml-training">ML Training</option>
+                <optgroup label="🐍 Python Workers">
+                  <option value="email-spam">📧 Email Spam Detection</option>
+                  <option value="text-analysis">📝 Text Analysis</option>
+                  <option value="ml-training">🤖 ML Training</option>
+                </optgroup>
+                <optgroup label="🟩 Node.js Workers">
+                  <option value="report-generation">📄 Report Generation</option>
+                  <option value="api-integration">🔌 API Integration</option>
+                  <option value="data-transformation">🔄 Data Transformation</option>
+                  <option value="email-sending">📧 Email Sending</option>
+                </optgroup>
               </select>
             </div>
 
@@ -162,13 +168,25 @@ export default function CreateTask() {
             <div style={{ fontSize: '14px', color: '#2d3748', lineHeight: '1.8' }}>
               <p style={{ marginBottom: '16px' }}>Create new tasks to be processed by available workers in the system.</p>
               <h4 style={{ marginTop: '20px', marginBottom: '8px', color: '#2d3748' }}>Task Types Available:</h4>
-              <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-                <li>📧 Email Spam Detection</li>
-                <li>📊 Data Processing</li>
-                <li>🖼️ Image Analysis</li>
-                <li>📝 Text Analysis</li>
-                <li>🤖 ML Training</li>
-              </ul>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <strong style={{ color: '#667eea' }}>🐍 Python Workers:</strong>
+                  <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
+                    <li>📧 Email Spam Detection</li>
+                    <li>📝 Text Analysis</li>
+                    <li>🤖 ML Training</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong style={{ color: '#48bb78' }}>🟩 Node.js Workers:</strong>
+                  <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
+                    <li>📄 Report Generation - Generate PDF/Excel reports</li>
+                    <li>🔌 API Integration - Fetch and process external API data</li>
+                    <li>🔄 Data Transformation - Convert between formats (CSV/JSON/XML)</li>
+                    <li>📧 Email Sending - Bulk email delivery and templating</li>
+                  </ul>
+                </div>
+              </div>
               <h4 style={{ marginTop: '20px', marginBottom: '8px', color: '#2d3748' }}>Priority Levels:</h4>
               <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
                 <li>🟢 Low - Standard processing</li>
