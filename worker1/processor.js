@@ -1,3 +1,7 @@
+import apiFetch from "./tasks/apiFetch";
+import sendMail from "./tasks/senMail";
+import reoportGen from "./tasks/reportGeneration";
+import dataTransform from "./tasks/DataTransform";
 module.exports = async function processor(job) {
   const task = job.data;
 
