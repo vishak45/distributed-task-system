@@ -11,6 +11,8 @@ export default function CreateTask() {
   })
 
   const [submitted, setSubmitted] = useState(false)
+  const [textInput, setTextInput] = useState('')
+  const [uploadedFile, setUploadedFile] = useState(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -20,10 +22,64 @@ export default function CreateTask() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setUploadedFile(file)
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 3000)
+    
+    try {
+      const formDataToSend = new FormData()
+      
+      // Add form fields
+      formDataToSend.append('taskId', `TK-${Date.now()}`)
+      formDataToSend.append('taskName', formData.taskName)
+      formDataToSend.append('description', formData.description)
+      formDataToSend.append('taskType', formData.taskType)
+      formDataToSend.append('priority', formData.priority)
+      formDataToSend.append('timeout', formData.timeout)
+      formDataToSend.append('retryCount', formData.retryCount)
+      
+      // Add context-specific data
+      if (formData.taskType === 'email-spam' || formData.taskType === 'text-analysis') {
+        formDataToSend.append('textInput', textInput)
+      }
+      
+      if (formData.taskType === 'data-transformation' && uploadedFile) {
+        formDataToSend.append('uploadedFile', uploadedFile)
+      }
+      
+      const response = await fetch('/api/addTasks', {
+        method: 'POST',
+        body: formDataToSend,
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSubmitted(true)
+        setTimeout(() => setSubmitted(false), 3000)
+        
+        // Reset form
+        setFormData({
+          taskName: '',
+          description: '',
+          taskType: 'email-spam',
+          priority: 'medium',
+          timeout: '300',
+          retryCount: '3',
+        })
+        setTextInput('')
+        setUploadedFile(null)
+      } else {
+        console.error('Failed to submit task')
+      }
+    } catch (error) {
+      console.error('Error submitting task:', error)
+    }
   }
 
   return (
@@ -83,7 +139,7 @@ export default function CreateTask() {
                 <optgroup label="🐍 Python Workers">
                   <option value="email-spam">📧 Email Spam Detection</option>
                   <option value="text-analysis">📝 Text Analysis</option>
-                  <option value="ml-training">🤖 ML Training</option>
+                
                 </optgroup>
                 <optgroup label="🟩 Node.js Workers">
                  
@@ -93,6 +149,69 @@ export default function CreateTask() {
                 </optgroup>
               </select>
             </div>
+
+            {(formData.taskType === 'email-spam' || formData.taskType === 'text-analysis') && (
+              <div className="form-group">
+                <label className="form-label required">
+                  {formData.taskType === 'email-spam' ? 'Email Text' : 'Text to Analyze'}
+                </label>
+                <textarea
+                  className="form-textarea"
+                  placeholder={
+                    formData.taskType === 'email-spam'
+                      ? 'Enter email content to check for spam...'
+                      : 'Enter text to analyze...'
+                  }
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  rows="6"
+                />
+              </div>
+            )}
+
+            {formData.taskType === 'data-transformation' && (
+              <div className="form-group">
+                <label className="form-label required">Upload File</label>
+                <div
+                  style={{
+                    border: '2px dashed #667eea',
+                    borderRadius: '8px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    backgroundColor: '#f7fafc',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => document.getElementById('file-input').click()}
+                >
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept=".csv,.json,.xml"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                  />
+                  {uploadedFile ? (
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#48bb78', fontWeight: '600' }}>
+                        ✅ File selected: {uploadedFile.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
+                        Click to change file
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#2d3748', fontWeight: '600' }}>
+                        📁 Click to upload or drag and drop
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
+                        CSV, JSON, or XML files supported
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="form-group">
               <label className="form-label required">Priority</label>
@@ -142,7 +261,7 @@ export default function CreateTask() {
               <button
                 type="button"
                 className="btn btn-secondary btn-block"
-                onClick={() =>
+                onClick={() => {
                   setFormData({
                     taskName: '',
                     description: '',
@@ -151,7 +270,9 @@ export default function CreateTask() {
                     timeout: '300',
                     retryCount: '3',
                   })
-                }
+                  setTextInput('')
+                  setUploadedFile(null)
+                }}
               >
                 Clear
               </button>
@@ -174,7 +295,7 @@ export default function CreateTask() {
                   <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
                     <li>📧 Email Spam Detection</li>
                     <li>📝 Text Analysis</li>
-                    <li>🤖 ML Training</li>
+                   
                   </ul>
                 </div>
                 <div>
