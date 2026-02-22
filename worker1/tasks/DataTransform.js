@@ -8,23 +8,36 @@ const dataTransform = async (job) => {
   console.log('🔧 Processing Data Transformation:', task.payload);
   
   try {
-    const { inputFormat, outputFormat, data } = task.payload;
+    const { outputFormat, textInput, uploadedFile, inputFormat } = task.data;
     
-    if (!inputFormat || !outputFormat || !data) {
-      throw new Error('inputFormat, outputFormat, and data are required');
+    if (!outputFormat) {
+      throw new Error('outputFormat is required');
     }
     
-    console.log(`🔄 Converting from ${inputFormat} to ${outputFormat}`);
+    // Determine input data source
+    let data = textInput;
+    let detectedInputFormat = inputFormat;
+    
+    if (uploadedFile && !textInput) {
+      data = Buffer.from(uploadedFile.buffer, 'base64').toString('utf-8');
+      detectedInputFormat = detectedInputFormat || uploadedFile.filename.split('.').pop().toLowerCase();
+    }
+    
+    if (!data) {
+      throw new Error('Either textInput or uploadedFile is required');
+    }
+    
+    console.log(`🔄 Converting from ${detectedInputFormat} to ${outputFormat}`);
     
     let transformedData;
     
     // Parse input
     let parsedData = data;
-    if (inputFormat === 'csv') {
+    if (detectedInputFormat === 'csv') {
       parsedData = parseCSV(data);
-    } else if (inputFormat === 'json') {
+    } else if (detectedInputFormat === 'json') {
       parsedData = JSON.parse(data);
-    } else if (inputFormat === 'xml') {
+    } else if (detectedInputFormat === 'xml') {
       parsedData = parseXML(data);
     }
     
@@ -45,12 +58,12 @@ const dataTransform = async (job) => {
     return {
       status: 'completed',
       taskId: task.id,
-      inputFormat: inputFormat,
+      inputFormat: detectedInputFormat,
       outputFormat: outputFormat,
       originalSize: data.length,
       transformedSize: transformedData.length,
       data: transformedData,
-      message: `Successfully transformed data from ${inputFormat} to ${outputFormat}`
+      message: `Successfully transformed data from ${detectedInputFormat} to ${outputFormat}`
     };
   } catch (error) {
     console.error('❌ Data transformation error:', error.message);
