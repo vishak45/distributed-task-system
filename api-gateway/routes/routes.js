@@ -14,7 +14,8 @@ router.post("/addTasks", async(req, res) => {
       priority,
       timeout,
       retryCount,
-      textInput
+      textInput,
+      outputFormat
     } = req.body;
 
     let fileData = null;
@@ -36,11 +37,14 @@ router.post("/addTasks", async(req, res) => {
         priority,
         timeout: parseInt(timeout),
         retryCount: parseInt(retryCount)
+        
       },
       data: {
         textInput: textInput || null,
-        uploadedFile: fileData || null
-      }
+        uploadedFile: fileData || null,
+        outputFormat:outputFormat||null
+      },
+     
     };
 
     await queue.add(`${taskType}`, task);

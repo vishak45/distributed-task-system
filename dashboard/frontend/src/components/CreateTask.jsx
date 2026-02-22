@@ -28,7 +28,13 @@ export default function CreateTask() {
       setUploadedFile(file)
     }
   }
-
+const handleFormatChange = (e) => {
+      const { name, value } = e.target
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -51,6 +57,7 @@ export default function CreateTask() {
       
       if (formData.taskType === 'data-transformation' && uploadedFile) {
         formDataToSend.append('uploadedFile', uploadedFile)
+        formDataToSend.append('outputFormat', formData.outputFormat)
       }
       
       const response = await fetch('/api/addTasks', {
@@ -198,7 +205,10 @@ export default function CreateTask() {
                       <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
                         Click to change file
                       </div>
+                    
                     </div>
+                    
+                    
                   ) : (
                     <div>
                       <div style={{ fontSize: '14px', color: '#2d3748', fontWeight: '600' }}>
@@ -218,6 +228,35 @@ export default function CreateTask() {
                     </div>
                   )}
                 </div>
+                {
+                  uploadedFile&&(
+                      
+                        formData.taskType=="data-transformation"&&(
+                          <div style={{ fontSize: '12px', color: '#718096', marginTop: '15px' }}>
+                            <h2>Choose output format</h2>
+                            <div style={{
+                              display:'flex',
+                              gap:'10px',
+                              marginTop:'5px'
+                            }}>
+                              <label>
+                                <input type="radio" name="format" value="csv" onChange={handleFormatChange} />
+                                CSV
+                              </label>
+                              <label>
+                                <input type="radio" name="format" value="json" onChange={handleFormatChange} />
+                                JSON
+                              </label>
+                              <label>
+                                <input type="radio" name="format" value="xml" onChange={handleFormatChange} />
+                                XML
+                              </label>
+                              </div>
+                            </div>
+                        )
+                      
+                  )
+                }
               </div>
             )}
 
