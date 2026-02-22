@@ -1,6 +1,7 @@
 from rq import Worker
 from redis import Redis
 from processor import process_spam_detection
+from datasetValidator import validate_dataset
 import logging
 
 # Setup logging
@@ -13,8 +14,9 @@ if __name__ == '__main__':
         redis_conn.ping()  # Test connection
         logger.info("Connected to Redis")
         
-        worker = Worker(['python-spam'], connection=redis_conn)
-        logger.info("Python Spam Detection Worker started, listening on 'python-spam' queue...")
+        # Listen to multiple queues for different task types
+        worker = Worker(['email-spam', 'dataset-validator'], connection=redis_conn)
+        logger.info("Python Worker started, listening on 'python-spam' and 'python-validation' queues...")
         worker.work()  # Continuously checks queue and processes jobs
         
     except Exception as e:
