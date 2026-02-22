@@ -1,0 +1,20 @@
+{
+  "name": "realtime-server",
+  "version": "1.0.0",
+  "description": "Real-time server for monitoring distributed task system",
+  "main": "realtime.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node realtime.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bullmq": "^5.69.2",
+    "express": "^5.2.1",
+    "ioredis": "^5.9.3",
+    "socket.io": "^4.8.2",
+    "uuid": "^13.0.0"
+  }
+}

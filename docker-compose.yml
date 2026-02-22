@@ -18,4 +18,12 @@ services:
     depends_on:
       - redis
 
-    
+  realtime:
+    build: ./realtime-server
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+    environment:
+      - PORT=3001
+
