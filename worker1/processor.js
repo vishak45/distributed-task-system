@@ -6,7 +6,7 @@ module.exports = async function processor(job) {
   const task = job.data;
 
   // Only process nodeJs tasks
-  if (task.type !== "nodeJs") {
+  if (task.type !== "api-integration" || task.type !== "data-transformation") {
     throw new Error(`Invalid task type: ${task.type}. Expected 'nodeJs'.`);
   }
 

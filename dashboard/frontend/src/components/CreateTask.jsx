@@ -138,7 +138,7 @@ export default function CreateTask() {
               >
                 <optgroup label="🐍 Python Workers">
                   <option value="email-spam">📧 Email Spam Detection</option>
-                  <option value="text-analysis">📝 Text Analysis</option>
+                  <option value="dataset-validator">📝 Dataset Validator</option>
                 
                 </optgroup>
                 <optgroup label="🟩 Node.js Workers">
@@ -150,7 +150,7 @@ export default function CreateTask() {
               </select>
             </div>
 
-            {(formData.taskType === 'email-spam' || formData.taskType === 'text-analysis') && (
+            {(formData.taskType === 'email-spam') && (
               <div className="form-group">
                 <label className="form-label required">
                   {formData.taskType === 'email-spam' ? 'Email Text' : 'Text to Analyze'}
@@ -169,7 +169,7 @@ export default function CreateTask() {
               </div>
             )}
 
-            {formData.taskType === 'data-transformation' && (
+            {(formData.taskType === 'data-transformation' || formData.taskType === 'dataset-validator') && (
               <div className="form-group">
                 <label className="form-label required">Upload File</label>
                 <div
@@ -204,9 +204,17 @@ export default function CreateTask() {
                       <div style={{ fontSize: '14px', color: '#2d3748', fontWeight: '600' }}>
                         📁 Click to upload or drag and drop
                       </div>
-                      <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
-                        CSV, JSON, or XML files supported
-                      </div>
+                      {
+                        formData.taskType === 'data-transformation' ? (
+                          <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
+                            Upload a CSV file to transform
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
+                            Upload a CSV file to validate
+                          </div>
+                        )
+                      }
                     </div>
                   )}
                 </div>
