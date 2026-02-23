@@ -1,7 +1,4 @@
-/**
- * API Integration Task Handler
- * Fetches data from external APIs and processes it
- */
+
 
 const http = require('http');
 

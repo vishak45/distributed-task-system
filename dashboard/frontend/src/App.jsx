@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar'
 import MonitorWorkers from './components/MonitorWorkers'
 import CreateTask from './components/CreateTask'
 import MonitorQueue from './components/MonitorQueue'
-
+import CompletedTasks from './components/CompletedTasks'
 function App() {
   const [activeSection, setActiveSection] = useState('workers')
 
@@ -16,6 +16,8 @@ function App() {
         return <CreateTask />
       case 'queue':
         return <MonitorQueue />
+      case 'completed-tasks':
+        return  <CompletedTasks />
       default:
         return <MonitorWorkers />
     }

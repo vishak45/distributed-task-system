@@ -1,7 +1,4 @@
-/**
- * Data Transformation Task Handler
- * Converts between CSV, JSON, XML formats
- */
+
 
 const dataTransform = async (job) => {
   const task = job.data;
@@ -14,7 +11,7 @@ const dataTransform = async (job) => {
       throw new Error('outputFormat is required');
     }
     
-    // Determine input data source
+
     let data = textInput;
     let detectedInputFormat = inputFormat;
     
@@ -31,7 +28,7 @@ const dataTransform = async (job) => {
     
     let transformedData;
     
-    // Parse input
+  
     let parsedData = data;
     if (detectedInputFormat === 'csv') {
       parsedData = parseCSV(data);
@@ -41,7 +38,7 @@ const dataTransform = async (job) => {
       parsedData = parseXML(data);
     }
     
-    // Transform to output format
+
     if (outputFormat === 'json') {
       transformedData = JSON.stringify(parsedData, null, 2);
     } else if (outputFormat === 'csv') {
@@ -50,7 +47,7 @@ const dataTransform = async (job) => {
       transformedData = convertToXML(parsedData);
     }
     
-    // Simulate processing
+
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     console.log(`✅ Data transformation completed`);

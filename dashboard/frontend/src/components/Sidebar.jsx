@@ -38,9 +38,10 @@ export default function Sidebar({ activeSection, setActiveSection }) {
 
         <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.2)', margin: '20px 0' }} />
 
-        <button className="nav-item" style={{ opacity: '0.6', cursor: 'not-allowed' }}>
+        <button  className={`nav-item ${activeSection === 'completed-tasks' ? 'active' : ''}`}
+        onClick={()=>setActiveSection('completed-tasks')}>
           <span className="nav-item-icon">⚙️</span>
-          <span>Settings</span>
+          <span>Completed Tasks</span>
         </button>
 
         <button className="nav-item" style={{ opacity: '0.6', cursor: 'not-allowed' }}>
