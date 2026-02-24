@@ -18,6 +18,11 @@ services:
     depends_on:
       - redis
 
+  worker-py:
+    build: ./workerPy
+    depends_on:
+      - redis
+
   realtime:
     build: ./realtime-server
     ports:
