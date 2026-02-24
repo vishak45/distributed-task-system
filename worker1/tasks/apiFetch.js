@@ -1,56 +1,53 @@
 
 
-const http = require('http');
+const axios = require('axios');
 
 const apiFetch = async (job) => {
   const task = job.data;
   console.log('🔧 Processing API Integration:', task.payload);
   
   try {
-    const { apiEndpoint, method = 'GET', params = {} } = task.payload;
+    const { 
+      apiEndpoint, 
+      method = 'GET', 
+      params = {}, 
+      headers = {},
+      timeout = 30000 
+    } = task.payload;
     
     if (!apiEndpoint) {
       throw new Error('API endpoint is required');
     }
     
-    // Simulate API fetch (in real scenario, use axios or fetch)
     console.log(`📡 Fetching from: ${apiEndpoint}`);
     console.log(`📋 Method: ${method}`);
     console.log(`📦 Params:`, params);
     
-    // Simulate 3s API call
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock response data
-    const mockData = {
-      api: apiEndpoint,
+    // Make actual API request
+    const response = await axios({
+      url: apiEndpoint,
       method: method,
-      params: params,
-      status: 200,
-      data: [
-        { id: 1, value: 'Result 1', timestamp: new Date().toISOString() },
-        { id: 2, value: 'Result 2', timestamp: new Date().toISOString() },
-        { id: 3, value: 'Result 3', timestamp: new Date().toISOString() }
-      ],
-      recordsCount: 3
-    };
+      params: method === 'GET' ? params : undefined,
+      data: method !== 'GET' ? params : undefined,
+      headers: headers,
+      timeout: timeout
+    });
     
-    // Simulate processing
-    const processedData = mockData.data.map(item => ({
-      ...item,
-      processed: true,
-      processedAt: new Date().toISOString()
-    }));
+    const responseData = response.data;
+    const isArray = Array.isArray(responseData);
+    const dataArray = isArray ? responseData : [responseData];
     
-    console.log(`✅ API call completed: ${mockData.recordsCount} records fetched`);
+    console.log(`✅ API call completed: ${dataArray.length} records fetched`);
     
     return {
       status: 'completed',
       taskId: task.id,
       apiEndpoint: apiEndpoint,
-      recordsFetched: mockData.recordsCount,
-      data: processedData,
-      message: `Successfully fetched ${mockData.recordsCount} records from API`
+      method: method,
+      statusCode: response.status,
+      recordsFetched: dataArray.length,
+      data: dataArray,
+      message: `Successfully fetched ${dataArray.length} records from API`
     };
   } catch (error) {
     console.error('❌ API fetch error:', error.message);
