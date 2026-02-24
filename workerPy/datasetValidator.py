@@ -82,9 +82,4 @@ def validate_dataset(dataset_path):
     return report
 
 
-
-if __name__ == "__main__":
-    # Test with a sample CSV
-    result = validate_dataset("sample.csv")
-    print(json.dumps(result, indent=2))
     
