@@ -15,7 +15,8 @@ router.post("/addTasks", async(req, res) => {
       timeout,
       retryCount,
       textInput,
-      outputFormat
+      outputFormat,
+      apiName
     } = req.body;
 
     let fileData = null;
@@ -42,7 +43,8 @@ router.post("/addTasks", async(req, res) => {
       data: {
         textInput: textInput || null,
         uploadedFile: fileData || null,
-        outputFormat:outputFormat||null
+        outputFormat:outputFormat||null,
+        apiName:apiName||null
       },
      
     };
