@@ -1,8 +1,8 @@
 const { Worker } = require("bullmq");
 const processor = require("./processor");
-
+const types=["api-integration","data-transformation"];
 const worker = new Worker(
-  "nodeJs",
+  types,
   processor,
   {
     connection: {

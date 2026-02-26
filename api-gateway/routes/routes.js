@@ -4,6 +4,16 @@ const queue = require("../queue/queue");
 
 const router = express.Router();
 
+// Define valid task types and their corresponding queue names
+const TASK_TYPE_MAPPING = {
+  "api-integration": "api-integration",
+  "data-transformation": "data-transformation",
+  "email-spam": "email-spam",
+  "dataset-validator": "dataset-validator"
+};
+
+const VALID_TASK_TYPES = Object.keys(TASK_TYPE_MAPPING);
+
 router.post("/addTasks", async(req, res) => {
   try {
     const { 
@@ -18,6 +28,13 @@ router.post("/addTasks", async(req, res) => {
       outputFormat,
       apiName
     } = req.body;
+
+    // Validate task type
+    if (!VALID_TASK_TYPES.includes(taskType)) {
+      return res.status(400).json({
+        error: `Invalid taskType. Allowed types: ${VALID_TASK_TYPES.join(", ")}`
+      });
+    }
 
     let fileData = null;
     if (req.file) {
@@ -49,12 +66,15 @@ router.post("/addTasks", async(req, res) => {
      
     };
 
-    await queue.add(`${taskType}`, task);
-    console.log("Task queued:", task);
+    // Route task to the correct queue
+    const queueName = TASK_TYPE_MAPPING[taskType];
+    await queue.add(queueName, task);
+    console.log(`Task queued to "${queueName}":`, task);
     
     res.status(200).json({
       message: "Task submitted",
       taskId,
+      queueName
     });
   } catch(err) {
     console.error("Error adding task:", err);
