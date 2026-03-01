@@ -204,7 +204,7 @@ docker-compose up --build <service-name>
 | `worker-py` | - | Python worker (email-spam, dataset-validator) |
 | `realtime` | 3001 | Socket.IO server for live updates |
 | `dashboard` | 8080 | React frontend with nginx |
-| `monitor-generator` | - | Auto-generates test tasks every 10 seconds |
+| `monitor-generator` | - | Auto-generates test tasks every 10 minutes |
 
 ## API Reference
 

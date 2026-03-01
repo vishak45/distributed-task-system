@@ -11,15 +11,15 @@ const dataTransform = async (task) => {
     }
     
 
-    let data = textInput;
-    let detectedInputFormat = inputFormat;
+    let data = textInput || '';
+    let detectedInputFormat = inputFormat || 'text';
     
-    if (uploadedFile && !textInput) {
+    if (uploadedFile) {
       data = Buffer.from(uploadedFile.buffer, 'base64').toString('utf-8');
-      detectedInputFormat = detectedInputFormat || uploadedFile.filename.split('.').pop().toLowerCase();
+      detectedInputFormat = inputFormat || uploadedFile.filename?.split('.').pop()?.toLowerCase() || 'text';
     }
     
-    if (!data) {
+    if (!data || data.trim() === '') {
       throw new Error('Either textInput or uploadedFile is required');
     }
     
