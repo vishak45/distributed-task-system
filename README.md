@@ -361,20 +361,28 @@ The React dashboard provides real-time monitoring with four main sections:
 - Queue metrics per queue (waiting, active, completed, failed, delayed)
 - Worker status cards
 
+![Monitor Workers](screenshots/op1.jpeg)
+
 ### Create Task
 - Form to submit new tasks
 - Task type selection with dynamic form fields
 - Pre-configured API endpoints for testing
+
+![Create Task](screenshots/op2.jpeg)
 
 ### Monitor Queue
 - Live job feed (added, started, completed, failed)
 - Filter by status
 - Queue statistics
 
+![Monitor Queue](screenshots/op3.jpeg)
+
 ### Completed Tasks
 - History of completed jobs
 - View job results
 - Per-queue completion counts
+
+![Completed Tasks](screenshots/op4.jpeg)
 
 ## Configuration
 

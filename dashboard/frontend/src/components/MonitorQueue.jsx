@@ -3,7 +3,8 @@ import { useSocket } from '../hooks/useSocket'
 
 export default function MonitorQueue() {
   const [filter, setFilter] = useState('all')
-  const { isConnected, queueMetrics, recentJobs } = useSocket()
+  const [selectedJob, setSelectedJob] = useState(null)
+  const { isConnected, queueMetrics, recentJobs, completedJobs } = useSocket()
 
   // Calculate totals from queue metrics
   const totalWaiting = Object.values(queueMetrics).reduce((sum, q) => sum + q.waiting, 0)
@@ -187,7 +188,15 @@ export default function MonitorQueue() {
                   )}
                 </div>
 
-                <button className="btn btn-secondary btn-small" style={{ whiteSpace: 'nowrap', marginLeft: '16px' }}>
+                <button 
+                  className="btn btn-secondary btn-small" 
+                  style={{ whiteSpace: 'nowrap', marginLeft: '16px' }}
+                  onClick={() => {
+                    // Find completed job result if available
+                    const completedJobData = completedJobs.find(j => j.id === item.id)
+                    setSelectedJob({ ...item, result: completedJobData?.result })
+                  }}
+                >
                   {item.status === 'failed' ? 'Retry' : 'View Details'}
                 </button>
               </div>
@@ -195,6 +204,135 @@ export default function MonitorQueue() {
           )}
         </div>
       </div>
+
+      {/* Job Details Modal */}
+      {selectedJob && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setSelectedJob(null)}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, color: '#2d3748' }}>Job Details</h2>
+              <button 
+                onClick={() => setSelectedJob(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#718096',
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Job ID</span>
+                <strong style={{ color: '#2d3748', fontFamily: 'monospace' }}>{selectedJob.id}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Task Name</span>
+                <strong style={{ color: '#2d3748' }}>{selectedJob.taskName || '-'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Queue</span>
+                <span style={{ backgroundColor: '#e3f2fd', color: '#1976d2', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
+                  {selectedJob.queue}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Status</span>
+                <span 
+                  className={`badge ${
+                    selectedJob.status === 'completed' ? 'completed' :
+                    selectedJob.status === 'processing' ? 'active' :
+                    selectedJob.status === 'failed' ? 'inactive' : 'pending'
+                  }`}
+                >
+                  {selectedJob.status}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Priority</span>
+                <span style={{
+                  backgroundColor: getPriorityColor(selectedJob.priority),
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                }}>
+                  {selectedJob.priority?.toUpperCase()}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                <span style={{ color: '#718096' }}>Created At</span>
+                <strong style={{ color: '#2d3748' }}>{selectedJob.createdAt}</strong>
+              </div>
+              {selectedJob.completedAt && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #edf2f7' }}>
+                  <span style={{ color: '#718096' }}>Completed At</span>
+                  <strong style={{ color: '#48bb78' }}>{selectedJob.completedAt}</strong>
+                </div>
+              )}
+              {selectedJob.error && (
+                <div style={{ padding: '12px', backgroundColor: '#fff5f5', borderRadius: '8px', marginTop: '8px' }}>
+                  <span style={{ color: '#c53030', fontWeight: '600' }}>Error:</span>
+                  <div style={{ color: '#c53030', marginTop: '4px', fontSize: '14px' }}>{selectedJob.error}</div>
+                </div>
+              )}
+              {selectedJob.result && (
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ color: '#718096', display: 'block', marginBottom: '8px' }}>Result:</span>
+                  <pre style={{
+                    backgroundColor: '#f7fafc',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    overflow: 'auto',
+                    maxHeight: '200px',
+                    margin: 0,
+                  }}>
+                    {JSON.stringify(selectedJob.result, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn btn-secondary" onClick={() => setSelectedJob(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Queue Stats Card */}
       <div className="grid-2">
