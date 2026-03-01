@@ -1,6 +1,6 @@
 const express = require("express");
 
-const queue = require("../queue/queue");
+const { getQueue } = require("../queue/queue");
 
 const router = express.Router();
 
@@ -68,7 +68,8 @@ router.post("/addTasks", async(req, res) => {
 
     // Route task to the correct queue
     const queueName = TASK_TYPE_MAPPING[taskType];
-    await queue.add(queueName, task);
+    const queue = getQueue(queueName);
+    await queue.add(task.type, task);
     console.log(`Task queued to "${queueName}":`, task);
     
     res.status(200).json({

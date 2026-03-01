@@ -1,0 +1,12 @@
+{
+  "name": "monitor-generator",
+  "version": "1.0.0",
+  "description": "Task generator for monitoring and testing",
+  "main": "taskAdder.js",
+  "scripts": {
+    "start": "node taskAdder.js"
+  },
+  "dependencies": {
+    "bullmq": "^5.69.2"
+  }
+}

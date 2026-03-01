@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const { Queue, Worker } = require('bullmq');
+const { Queue, QueueEvents } = require('bullmq');
 const Redis = require('ioredis');
 
 const app = express();
@@ -20,17 +20,22 @@ const redis = new Redis({
 });
 
 // Queue instances to monitor
-const queues = {
-  nodeJs: new Queue('nodeJs', { connection: { host: 'redis', port: 6379 } }),
-  python: new Queue('python', { connection: { host: 'redis', port: 6379 } }),
-};
+const queueNames = ['api-integration', 'data-transformation', 'email-spam', 'dataset-validator'];
+const queues = {};
+const queueEvents = {};
+const connection = { host: 'redis', port: 6379 };
+
+queueNames.forEach(name => {
+  queues[name] = new Queue(name, { connection });
+  queueEvents[name] = new QueueEvents(name, { connection });
+});
 
 // Store active connections and metrics
 const connectedClients = new Set();
-const queueMetrics = {
-  nodeJs: { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 },
-  python: { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 },
-};
+const queueMetrics = {};
+queueNames.forEach(name => {
+  queueMetrics[name] = { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
+});
 
 const workerStatus = {
   active: [],
@@ -92,17 +97,21 @@ async function updateQueueMetrics(queueName) {
   }
 }
 
-// Monitor queue events
-function setupQueueMonitoring(queueName, queue) {
-  // Job added event
-  queue.on('waiting', (job) => {
-    console.log(`[${queueName}] Job added:`, job.id);
+// Monitor queue events using QueueEvents
+function setupQueueMonitoring(queueName) {
+  const events = queueEvents[queueName];
+  const queue = queues[queueName];
+
+  // Job added/waiting event
+  events.on('waiting', async ({ jobId }) => {
+    console.log(`[${queueName}] Job added:`, jobId);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-added', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
-        data: job.data,
+        id: jobId,
+        name: job?.name,
+        data: job?.data,
         timestamp: new Date().toISOString(),
       },
     });
@@ -110,13 +119,14 @@ function setupQueueMonitoring(queueName, queue) {
   });
 
   // Job started/active event
-  queue.on('active', (job) => {
-    console.log(`[${queueName}] Job started:`, job.id);
+  events.on('active', async ({ jobId }) => {
+    console.log(`[${queueName}] Job started:`, jobId);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-started', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
+        id: jobId,
+        name: job?.name,
         timestamp: new Date().toISOString(),
       },
     });
@@ -124,14 +134,15 @@ function setupQueueMonitoring(queueName, queue) {
   });
 
   // Job completed event
-  queue.on('completed', (job) => {
-    console.log(`[${queueName}] Job completed:`, job.id);
+  events.on('completed', async ({ jobId, returnvalue }) => {
+    console.log(`[${queueName}] Job completed:`, jobId);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-completed', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
-        returnValue: job.returnValue,
+        id: jobId,
+        name: job?.name,
+        returnValue: returnvalue,
         timestamp: new Date().toISOString(),
       },
     });
@@ -139,14 +150,15 @@ function setupQueueMonitoring(queueName, queue) {
   });
 
   // Job failed event
-  queue.on('failed', (job, err) => {
-    console.error(`[${queueName}] Job failed:`, job.id, err.message);
+  events.on('failed', async ({ jobId, failedReason }) => {
+    console.error(`[${queueName}] Job failed:`, jobId, failedReason);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-failed', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
-        error: err.message,
+        id: jobId,
+        name: job?.name,
+        error: failedReason,
         timestamp: new Date().toISOString(),
       },
     });
@@ -154,13 +166,14 @@ function setupQueueMonitoring(queueName, queue) {
   });
 
   // Job delayed event
-  queue.on('delayed', (job) => {
-    console.log(`[${queueName}] Job delayed:`, job.id);
+  events.on('delayed', async ({ jobId }) => {
+    console.log(`[${queueName}] Job delayed:`, jobId);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-delayed', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
+        id: jobId,
+        name: job?.name,
         timestamp: new Date().toISOString(),
       },
     });
@@ -168,31 +181,22 @@ function setupQueueMonitoring(queueName, queue) {
   });
 
   // Progress event
-  queue.on('progress', (job, progress) => {
-    console.log(`[${queueName}] Job progress:`, job.id, progress);
+  events.on('progress', async ({ jobId, data }) => {
+    console.log(`[${queueName}] Job progress:`, jobId, data);
+    const job = await queue.getJob(jobId);
     io.emit('queue:job-progress', {
       queue: queueName,
       job: {
-        id: job.id,
-        name: job.name,
-        progress: progress,
+        id: jobId,
+        name: job?.name,
+        progress: data,
         timestamp: new Date().toISOString(),
       },
     });
   });
 
-  // Queue global events
-  queue.on('error', (err) => {
-    console.error(`[${queueName}] Queue error:`, err);
-    io.emit('queue:error', {
-      queue: queueName,
-      error: err.message,
-      timestamp: new Date().toISOString(),
-    });
-  });
-
-  // Drain event (queue is empty)
-  queue.on('drained', () => {
+  // Drained event (queue is empty)
+  events.on('drained', () => {
     console.log(`[${queueName}] Queue drained`);
     io.emit('queue:drained', {
       queue: queueName,
@@ -278,11 +282,8 @@ function updateLocalWorkerStatus(workerData) {
   });
 }
 
-// Periodic metrics update (every 5 seconds)
-setInterval(async () => {
-  await updateQueueMetrics('nodeJs');
-  await updateQueueMetrics('python');
-}, 5000);
+// Metrics are updated via event-driven approach - no polling needed
+// Each queue event (waiting, active, completed, failed, delayed) triggers updateQueueMetrics
 
 // Socket.IO connection handler
 io.on('connection', (socket) => {
@@ -354,16 +355,18 @@ async function initialize() {
   try {
     console.log('Initializing realtime server...');
 
-    // Setup queue monitoring
-    setupQueueMonitoring('nodeJs', queues.nodeJs);
-    setupQueueMonitoring('python', queues.python);
+    // Setup queue monitoring for all queues
+    queueNames.forEach(queueName => {
+      setupQueueMonitoring(queueName);
+    });
 
     // Setup worker monitoring
     setupWorkerMonitoring();
 
     // Initial metrics update
-    await updateQueueMetrics('nodeJs');
-    await updateQueueMetrics('python');
+    for (const queueName of queueNames) {
+      await updateQueueMetrics(queueName);
+    }
 
     console.log('Realtime server initialized successfully');
   } catch (error) {
@@ -374,6 +377,8 @@ async function initialize() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  // Close all queue event listeners
+  await Promise.all(Object.values(queueEvents).map(qe => qe.close()));
   await redis.disconnect();
   server.close(() => {
     console.log('Server closed');
@@ -383,6 +388,8 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
+  // Close all queue event listeners
+  await Promise.all(Object.values(queueEvents).map(qe => qe.close()));
   await redis.disconnect();
   server.close(() => {
     console.log('Server closed');

@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir pandas redis rq joblib
+RUN pip install --no-cache-dir pandas redis bullmq joblib scikit-learn
 
 CMD ["python", "worker.py"]
