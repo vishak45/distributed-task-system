@@ -1,38 +1,46 @@
 const { Worker } = require("bullmq");
 const processor = require("./processor");
-const types=["api-integration","data-transformation"];
-const worker = new Worker(
-  types,
-  processor,
-  {
-    connection: {
-      host: "redis",
-      port: 6379,
-    },
-  }
-);
 
-// Start the worker
-worker.on("ready", () => {
-  console.log("Worker ready and listening for jobs...");
-});
+const connection = {
+  host: "redis",
+  port: 6379,
+};
 
-worker.on("completed", (job) => {
-  console.log("Job finished:", job.id);
-});
+// Create separate workers for each queue type
+const queueTypes = ["api-integration", "data-transformation"];
+const workers = [];
 
-worker.on("failed", (job, err) => {
-  console.error("Job failed:", job.id, err.message);
-});
+queueTypes.forEach((queueName) => {
+  const worker = new Worker(queueName, processor, { connection });
 
-// Handle worker errors (connection failures, etc.)
-worker.on("error", (err) => {
-  console.error("Worker error:", err);
+  worker.on("ready", () => {
+    console.log(`Worker for '${queueName}' ready and listening...`);
+  });
+
+  worker.on("completed", (job) => {
+    console.log(`[${queueName}] Job completed:`, job.id);
+  });
+
+  worker.on("failed", (job, err) => {
+    console.error(`[${queueName}] Job failed:`, job.id, err.message);
+  });
+
+  worker.on("error", (err) => {
+    console.error(`[${queueName}] Worker error:`, err);
+  });
+
+  workers.push(worker);
 });
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down gracefully...");
-  await worker.close();
+  await Promise.all(workers.map((w) => w.close()));
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("SIGINT received, shutting down gracefully...");
+  await Promise.all(workers.map((w) => w.close()));
   process.exit(0);
 });

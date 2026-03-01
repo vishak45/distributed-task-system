@@ -2,8 +2,7 @@
 
 const axios = require('axios');
 
-const apiFetch = async (job) => {
-  const task = job.data;
+const apiFetch = async (task) => {
   console.log('🔧 Processing API Integration:', task.payload);
   
   try {
@@ -15,17 +14,20 @@ const apiFetch = async (job) => {
       timeout = 30000 
     } = task.payload;
     
-    if (!apiEndpoint) {
+    // Also check in data for apiEndpoint from frontend
+    const endpoint = apiEndpoint || task.data?.apiEndpoint;
+    
+    if (!endpoint) {
       throw new Error('API endpoint is required');
     }
     
-    console.log(`📡 Fetching from: ${apiEndpoint}`);
+    console.log(`📡 Fetching from: ${endpoint}`);
     console.log(`📋 Method: ${method}`);
     console.log(`📦 Params:`, params);
     
     // Make actual API request
     const response = await axios({
-      url: apiEndpoint,
+      url: endpoint,
       method: method,
       params: method === 'GET' ? params : undefined,
       data: method !== 'GET' ? params : undefined,
@@ -42,7 +44,7 @@ const apiFetch = async (job) => {
     return {
       status: 'completed',
       taskId: task.id,
-      apiEndpoint: apiEndpoint,
+      apiEndpoint: endpoint,
       method: method,
       statusCode: response.status,
       recordsFetched: dataArray.length,

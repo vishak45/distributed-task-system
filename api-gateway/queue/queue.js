@@ -1,10 +1,19 @@
 const {Queue} = require('bullmq');
 
-const queue = new Queue('queue', {
-    connection: {
-        host: 'redis',
-        port: 6379
-    }
-});
+const connection = {
+    host: 'redis',
+    port: 6379
+};
 
-module.exports = queue;
+// Create separate queues for each task type
+const queues = {
+    'api-integration': new Queue('api-integration', { connection }),
+    'data-transformation': new Queue('data-transformation', { connection }),
+    'email-spam': new Queue('email-spam', { connection }),
+    'dataset-validator': new Queue('dataset-validator', { connection })
+};
+
+module.exports = {
+    getQueue: (queueName) => queues[queueName],
+    queues
+};

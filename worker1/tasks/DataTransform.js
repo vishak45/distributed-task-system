@@ -1,7 +1,6 @@
 
 
-const dataTransform = async (job) => {
-  const task = job.data;
+const dataTransform = async (task) => {
   console.log('🔧 Processing Data Transformation:', task.payload);
   
   try {

@@ -32,3 +32,16 @@ services:
     environment:
       - PORT=3001
 
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+      - realtime
+
+  monitor-generator:
+    build: ./monitor-generator
+    depends_on:
+      - redis
+    restart: unless-stopped

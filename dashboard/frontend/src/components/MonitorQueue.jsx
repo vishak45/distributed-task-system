@@ -1,100 +1,26 @@
 import { useState } from 'react'
+import { useSocket } from '../hooks/useSocket'
 
 export default function MonitorQueue() {
   const [filter, setFilter] = useState('all')
+  const { isConnected, queueMetrics, recentJobs } = useSocket()
 
-  const queueItems = [
-    {
-      id: 'TK-10043',
-      taskName: 'Email Spam Detection',
-      status: 'completed',
-      priority: 'high',
-      createdAt: '2 minutes ago',
-      completedAt: '1 minute ago',
-      worker: 'Worker 1',
-      processingTime: '45s',
-    },
-    {
-      id: 'TK-10042',
-      taskName: 'Data Processing Job',
-      status: 'completed',
-      priority: 'medium',
-      createdAt: '5 minutes ago',
-      completedAt: '3 minutes ago',
-      worker: 'Worker 3',
-      processingTime: '120s',
-    },
-    {
-      id: 'TK-10041',
-      taskName: 'Image Analysis Task',
-      status: 'processing',
-      priority: 'high',
-      createdAt: '8 seconds ago',
-      worker: 'Worker 2',
-      progress: 65,
-    },
-    {
-      id: 'TK-10040',
-      taskName: 'Text Analysis',
-      status: 'processing',
-      priority: 'medium',
-      createdAt: '12 seconds ago',
-      worker: 'Worker Py',
-      progress: 32,
-    },
-    {
-      id: 'TK-10039',
-      taskName: 'ML Training Model',
-      status: 'pending',
-      priority: 'critical',
-      createdAt: '30 seconds ago',
-      estimatedWait: '3 minutes',
-    },
-    {
-      id: 'TK-10038',
-      taskName: 'Email Spam Detection',
-      status: 'pending',
-      priority: 'medium',
-      createdAt: '45 seconds ago',
-      estimatedWait: '5 minutes',
-    },
-    {
-      id: 'TK-10037',
-      taskName: 'Data Processing Job',
-      status: 'failed',
-      priority: 'low',
-      createdAt: '2 hours ago',
-      failedAt: '1 hour 55 minutes ago',
-      error: 'Timeout exceeded',
-      worker: 'Worker 1',
-    },
-  ]
+  // Calculate totals from queue metrics
+  const totalWaiting = Object.values(queueMetrics).reduce((sum, q) => sum + q.waiting, 0)
+  const totalActive = Object.values(queueMetrics).reduce((sum, q) => sum + q.active, 0)
+  const totalCompleted = Object.values(queueMetrics).reduce((sum, q) => sum + q.completed, 0)
+  const totalFailed = Object.values(queueMetrics).reduce((sum, q) => sum + q.failed, 0)
 
-  const filteredItems = queueItems.filter((item) => {
+  const filteredItems = recentJobs.filter((item) => {
     if (filter === 'all') return true
     return item.status === filter
   })
 
   const stats = [
-    { label: 'Total in Queue', value: queueItems.length, color: '#4299e1', icon: '📋' },
-    {
-      label: 'Processing',
-      value: queueItems.filter((x) => x.status === 'processing').length,
-      color: '#ed8936',
-      icon: '⚙️',
-    },
-    {
-      label: 'Pending',
-      value: queueItems.filter((x) => x.status === 'pending').length,
-      color: '#ecc94b',
-      icon: '⏳',
-    },
-    {
-      label: 'Completed',
-      value: queueItems.filter((x) => x.status === 'completed').length,
-      color: '#48bb78',
-      icon: '✅',
-    },
+    { label: 'Waiting', value: totalWaiting, color: '#ecc94b', icon: '⏳' },
+    { label: 'Processing', value: totalActive, color: '#ed8936', icon: '⚙️' },
+    { label: 'Completed', value: totalCompleted, color: '#48bb78', icon: '✅' },
+    { label: 'Failed', value: totalFailed, color: '#e53e3e', icon: '❌' },
   ]
 
 
@@ -117,7 +43,12 @@ export default function MonitorQueue() {
     <div>
       <div className="page-header">
         <h1 className="page-title">📋 Monitor Request Queue</h1>
-        <p className="page-subtitle">Track all tasks in the processing queue</p>
+        <p className="page-subtitle">
+          Track all tasks in the processing queue
+          <span style={{ marginLeft: '12px', fontSize: '12px', color: isConnected ? '#48bb78' : '#e53e3e' }}>
+            {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+          </span>
+        </p>
       </div>
 
       {/* Stats */}
@@ -150,25 +81,25 @@ export default function MonitorQueue() {
             className={`btn btn-small ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('all')}
           >
-            All ({queueItems.length})
+            All ({recentJobs.length})
           </button>
           <button
             className={`btn btn-small ${filter === 'pending' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('pending')}
           >
-            Pending ({queueItems.filter((x) => x.status === 'pending').length})
+            Pending ({recentJobs.filter((x) => x.status === 'pending').length})
           </button>
           <button
             className={`btn btn-small ${filter === 'processing' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('processing')}
           >
-            Processing ({queueItems.filter((x) => x.status === 'processing').length})
+            Processing ({recentJobs.filter((x) => x.status === 'processing').length})
           </button>
           <button
             className={`btn btn-small ${filter === 'completed' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('completed')}
           >
-            Completed ({queueItems.filter((x) => x.status === 'completed').length})
+            Completed ({recentJobs.filter((x) => x.status === 'completed').length})
           </button>
         </div>
 
@@ -218,22 +149,23 @@ export default function MonitorQueue() {
 
                   <div className="queue-item-meta">
                     <span>📅 Created: {item.createdAt}</span>
+                    {item.queue && <span>📦 Queue: {item.queue}</span>}
                     {item.worker && <span>👷 Worker: {item.worker}</span>}
 
-                    {item.status === 'processing' && (
+                    {item.status === 'processing' && item.progress !== undefined && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>Progress: {item.progress}%</span>
                       </div>
                     )}
 
-                    {item.status === 'completed' && <span>✅ Completed: {item.completedAt} ({item.processingTime})</span>}
+                    {item.status === 'completed' && <span>✅ Completed: {item.completedAt}</span>}
 
-                    {item.status === 'pending' && <span>⏳ Est. Wait: {item.estimatedWait}</span>}
+                    {item.status === 'pending' && <span>⏳ Waiting...</span>}
 
                     {item.status === 'failed' && <span style={{ color: '#e53e3e' }}>❌ Error: {item.error}</span>}
                   </div>
 
-                  {item.status === 'processing' && (
+                  {item.status === 'processing' && item.progress !== undefined && (
                     <div
                       style={{
                         marginTop: '8px',
@@ -303,8 +235,9 @@ export default function MonitorQueue() {
             <div className="card-title">Recent Failures</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {queueItems
+            {recentJobs
               .filter((x) => x.status === 'failed')
+              .slice(0, 5)
               .map((item) => (
                 <div
                   key={item.id}
@@ -316,12 +249,17 @@ export default function MonitorQueue() {
                   }}
                 >
                   <div style={{ fontWeight: '600', color: '#2d3748', fontSize: '14px' }}>{item.id}</div>
-                  <div style={{ fontSize: '12px', color: '#c53030', marginTop: '4px' }}>Error: {item.error}</div>
+                  <div style={{ fontSize: '12px', color: '#c53030', marginTop: '4px' }}>Error: {item.error || 'Unknown error'}</div>
                   <button className="btn btn-small" style={{ marginTop: '8px', fontSize: '11px' }}>
                     Retry
                   </button>
                 </div>
               ))}
+            {recentJobs.filter((x) => x.status === 'failed').length === 0 && (
+              <div style={{ color: '#718096', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
+                No recent failures
+              </div>
+            )}
           </div>
         </div>
       </div>
