@@ -10,7 +10,10 @@ def process_spam_detection(text):
     """Job handler function for spam detection"""
     vectorized = vectorizer.transform([text])
     prediction = model.predict(vectorized)[0]
-    
+    if prediction == 0:
+        prediction = "ham"
+    else:
+        prediction = "spam"
 
     try:
         confidence = float(model.predict_proba(vectorized)[0].max())
@@ -18,7 +21,7 @@ def process_spam_detection(text):
         confidence = None
         
     return {
-        "result": int(prediction),
+        "result": prediction,
         "confidence": confidence,
         "text": text
     }

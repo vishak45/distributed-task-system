@@ -40,7 +40,8 @@ const generateDemoTasks = async () => {
     } catch (err) {
       console.error('[Monitor] Error adding task:', err.message);
     }
-  }, 10000); // Every 10 seconds
+  }, // 10 * 60 * 1000
+  10 * 60 * 1000); // Every 10 minutes
 };
 
 // Start the generator

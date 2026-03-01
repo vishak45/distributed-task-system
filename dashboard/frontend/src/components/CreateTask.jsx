@@ -9,6 +9,7 @@ export default function CreateTask() {
     timeout: '300',
     retryCount: '3',
     apiEndpoint: 'jokes',
+    outputFormat: 'json',
   })
 
   const [submitted, setSubmitted] = useState(false)
@@ -149,9 +150,15 @@ const handleFormatChange = (e) => {
         formDataToSend.append('apiName', selectedAPI?.name)
       }
       
-      if (formData.taskType === 'data-transformation' && uploadedFile) {
-        formDataToSend.append('uploadedFile', uploadedFile)
+      if (formData.taskType === 'data-transformation') {
         formDataToSend.append('outputFormat', formData.outputFormat)
+        if (uploadedFile) {
+          formDataToSend.append('uploadedFile', uploadedFile)
+        }
+      }
+
+      if (formData.taskType === 'dataset-validator' && uploadedFile) {
+        formDataToSend.append('uploadedFile', uploadedFile)
       }
       
       const response = await fetch('/api/addTasks', {
@@ -173,6 +180,7 @@ const handleFormatChange = (e) => {
           timeout: '300',
           retryCount: '3',
           apiEndpoint: 'jokes',
+          outputFormat: 'json',
         })
         setTextInput('')
         setUploadedFile(null)
@@ -351,9 +359,7 @@ const handleFormatChange = (e) => {
                   )}
                 </div>
                 {
-                  uploadedFile&&(
-                      
-                        formData.taskType=="data-transformation"&&(
+                  formData.taskType=="data-transformation"&&(
                           <div style={{ fontSize: '12px', color: '#718096', marginTop: '15px' }}>
                             <h2>Choose output format</h2>
                             <div style={{
@@ -362,24 +368,22 @@ const handleFormatChange = (e) => {
                               marginTop:'5px'
                             }}>
                               <label>
-                                <input type="radio" name="format" value="csv" onChange={handleFormatChange} />
+                                <input type="radio" name="outputFormat" value="csv" onChange={handleFormatChange} checked={formData.outputFormat === 'csv'} />
                                 CSV
                               </label>
                               <label>
-                                <input type="radio" name="format" value="json" onChange={handleFormatChange} />
+                                <input type="radio" name="outputFormat" value="json" onChange={handleFormatChange} checked={formData.outputFormat === 'json'} />
                                 JSON
                               </label>
                               <label>
-                                <input type="radio" name="format" value="xml" onChange={handleFormatChange} />
+                                <input type="radio" name="outputFormat" value="xml" onChange={handleFormatChange} checked={formData.outputFormat === 'xml'} />
                                 XML
                               </label>
                               </div>
                             </div>
                         )
-                      
-                  )
                 }
-              </div>
+            </div>
             )}
 
             <div className="form-group">
