@@ -69,6 +69,74 @@ A scalable, real-time distributed task processing system built with Node.js, Pyt
 4. **Real-time Updates**: Queue events are captured and broadcast via Socket.IO
 5. **Dashboard Display**: React dashboard displays live metrics and job status
 
+### Task Lifecycle Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as API Gateway
+    participant Redis as Redis Queue
+    participant Worker as Worker (Node/Python)
+    participant RT as Realtime Server
+    participant Dashboard
+
+    Note over Client,Dashboard: 📥 Task Submission Phase
+    Client->>+API: POST /api/addTasks
+    API->>API: Validate & Parse Task
+    API->>Redis: Add job to queue (BullMQ)
+    Redis-->>API: Job ID
+    API-->>-Client: ✅ Task Submitted
+
+    Note over Client,Dashboard: ⚙️ Processing Phase
+    loop Worker Polling
+        Worker->>Redis: Poll respective queue
+        Redis-->>Worker: Job available?
+    end
+    Redis->>+Worker: Dispatch job
+    Worker->>Worker: Process task
+    Note right of Worker: api-fetch, transform,<br/>spam-detect, validate
+
+    Note over Client,Dashboard: 📡 Real-time Update Phase
+    Worker->>-Redis: Mark job completed
+    Redis->>RT: Emit completion event
+    RT->>Dashboard: Socket.IO broadcast
+    Dashboard->>Dashboard: Update UI
+
+    Note over Client,Dashboard: ✨ Task Complete!
+```
+
+### Worker Queue Assignment
+
+```mermaid
+flowchart LR
+    subgraph Queues["📬 Task Queues"]
+        Q1[api-integration]
+        Q2[data-transformation]
+        Q3[email-spam]
+        Q4[dataset-validator]
+    end
+
+    subgraph NodeWorker["🟢 Node.js Worker"]
+        NW[worker.js]
+    end
+
+    subgraph PyWorker["🐍 Python Worker"]
+        PW[worker.py]
+    end
+
+    Q1 --> NW
+    Q2 --> NW
+    Q3 --> PW
+    Q4 --> PW
+
+    style Q1 fill:#e1f5fe
+    style Q2 fill:#e1f5fe
+    style Q3 fill:#fff3e0
+    style Q4 fill:#fff3e0
+    style NW fill:#c8e6c9
+    style PW fill:#ffecb3
+```
+
 ## Tech Stack
 
 ### Backend
